@@ -211,6 +211,28 @@ input {
     <div id="newsContainer">Loading...</div>
 </div>
 
+<!-- FOOTER -->
+<div class="card" style="text-align:center;">
+    <h2>Contact & Credits</h2>
+
+    <p><b>Developed By:</b></p>
+    <p>👨‍💻 Indranil Kumar</p>
+    <p>👨‍💻 Aomgh Ranjan</p>
+
+    <br>
+
+    <p><b>Contact Details:</b></p>
+    <p>📧 Email: stocksphere.team@gmail.com</p>
+    <p>📞 Phone: +91 98765 43210</p>
+    <p>🌐 Website: www.stocksphere-demo.com</p>
+
+    <br>
+
+    <p style="font-size:14px;color:#94a3b8;">
+        © 2026 StockSphere Pro | Educational Project
+    </p>
+</div>
+
 </div>
 </div>
 
@@ -235,7 +257,7 @@ function login(){
 function showApp(){loginPage.style.display="none";app.style.display="block";}
 function logout(){localStorage.clear();location.reload();}
 
-// STOCKS
+// STOCK
 const stocks=["TCS","RELIANCE","HDFC"];
 let data={};
 
@@ -274,13 +296,9 @@ function buy(){
     let s=stockName.value.toUpperCase();
     let q=parseInt(qty.value);
     let price=parseFloat(data[s]);
-
-    if(!price) return showAlert("Invalid stock","error");
-    if(bal<price*q) return showAlert("Low balance","error");
-
-    bal-=price*q;
-    pf[s]=(pf[s]||0)+q;
-
+    if(!price)return showAlert("Invalid stock","error");
+    if(bal<price*q)return showAlert("Low balance","error");
+    bal-=price*q; pf[s]=(pf[s]||0)+q;
     showAlert("Stock bought","success");
     balance.innerText=bal;
 }
@@ -288,17 +306,13 @@ function buy(){
 function sell(){
     let s=stockName.value.toUpperCase();
     let q=parseInt(qty.value);
-
-    if(!pf[s]||pf[s]<q) return showAlert("Not enough shares","error");
-
-    bal+=data[s]*q;
-    pf[s]-=q;
-
+    if(!pf[s]||pf[s]<q)return showAlert("Not enough shares","error");
+    bal+=data[s]*q; pf[s]-=q;
     showAlert("Stock sold","info");
     balance.innerText=bal;
 }
 
-// TRADINGVIEW
+// CHART
 new TradingView.widget({
     width:"100%",
     height:400,
@@ -308,7 +322,7 @@ new TradingView.widget({
     container_id:"chart"
 });
 
-// CHARTS
+// EXTRA CHARTS
 new Chart(document.getElementById("portfolioChart"), {
     type:"line",
     data:{labels:["Mon","Tue","Wed","Thu","Fri"],
@@ -342,7 +356,7 @@ setInterval(()=>{
     });
 },3000);
 
-// 📰 WORKING NEWS (REUTERS RSS)
+// NEWS (WORKING)
 async function loadNews(){
     try{
         let res=await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://feeds.reuters.com/reuters/businessNews");
