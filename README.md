@@ -3,7 +3,7 @@
  Project Description
 StockSphere is a web-based stock market dashboard designed to help users track stocks, view portfolio data, and stay updated with market news.
 
- 🚀 Features
+ Features
 - Stock portfolio tracking
 - Search functionality
 - Market news section
