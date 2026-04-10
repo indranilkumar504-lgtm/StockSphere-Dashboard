@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockSphere Pro</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://s3.tradingview.com/tv.js"></script>
+
+<style>
+* {transition: all 0.2s ease-in-out;}
+
+body {
+    margin:0;
+    font-family:sans-serif;
+    color:white;
+    background:
+    linear-gradient(rgba(15,23,42,0.85), rgba(2,6,23,0.95)),
+    url("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3");
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+/* ALERT */
+#alertBox {
+    position:fixed;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 20px;
+    border-radius:8px;
+    display:none;
+    z-index:9999;
+}
+.success{background:#22c55e;}
+.error{background:#ef4444;}
+.info{background:#3b82f6;}
+
+/* SIDEBAR */
+.sidebar {
+    width:220px;
+    height:100vh;
+    background:#020617;
+    position:fixed;
+    padding:20px;
+}
+.sidebar a {
+    display:block;
+    color:#cbd5f5;
+    margin:10px 0;
+    text-decoration:none;
+}
+.sidebar a:hover {color:#38bdf8;}
+
+/* MAIN */
+.main {
+    margin-left:240px;
+    padding:20px;
+}
+
+/* CARD */
+.card {
+    background: rgba(30,41,59,0.75);
+    backdrop-filter: blur(10px);
+    padding:20px;
+    margin:15px 0;
+    border-radius:12px;
+}
+.card:hover {transform:translateY(-5px);}
+
+/* HERO */
+.hero {
+    background:linear-gradient(135deg,#1d4ed8,#38bdf8);
+    text-align:center;
+}
+
+/* STOCK */
+.stock-card {
+    background:#020617;
+    padding:10px;
+    border-radius:8px;
+    margin:10px 0;
+}
+.stock-card:hover {transform:scale(1.05);}
+.positive{color:#22c55e;}
+.negative{color:#ef4444;}
+
+button {
+    padding:8px 12px;
+    background:#3b82f6;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+button:hover {background:#60a5fa;}
+
+input {
+    padding:8px;
+    margin:5px;
+    border-radius:6px;
+    border:none;
+}
+
+#loginPage {
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+</style>
+</head>
+
+<body>
+
+<div id="alertBox"></div>
+
+<!-- LOGIN -->
+<div id="loginPage">
+    <h2>StockSphere Login</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password">
+    <button onclick="login()">Login</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+
+<div class="sidebar">
+    <h2>StockSphere</h2>
+
+    <a href="#">Dashboard</a>
+
+    <hr>
+
+    <a href="https://www.nseindia.com" target="_blank">📈 NSE</a>
+    <a href="https://www.bseindia.com" target="_blank">🏦 BSE</a>
+    <a href="https://www.nasdaq.com" target="_blank">💻 NASDAQ</a>
+    <a href="https://www.nyse.com" target="_blank">🌍 NYSE</a>
+
+    <hr>
+
+    <a href="https://www.moneycontrol.com" target="_blank">📰 News</a>
+    <a href="https://economictimes.indiatimes.com/markets" target="_blank">ET Markets</a>
+
+    <br>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div class="main">
+
+<!-- HERO -->
+<div class="card hero">
+    <h1>Welcome to StockSphere 🚀</h1>
+    <p>Smart trading dashboard with AI insights, charts & portfolio tracking</p>
+</div>
+
+<!-- SEARCH -->
+<div class="card">
+    <input id="search" placeholder="Search stock...">
+</div>
+
+<!-- STOCKS -->
+<div class="card" id="stocks"></div>
+
+<!-- PORTFOLIO -->
+<div class="card">
+    <h2>Portfolio</h2>
+    <p>Balance: ₹<span id="balance"></span></p>
+    <input id="stockName" placeholder="Stock">
+    <input id="qty" type="number">
+    <button onclick="buy()">Buy</button>
+    <button onclick="sell()">Sell</button>
+</div>
+
+<!-- CHART -->
+<div class="card">
+    <h2>Advanced Chart</h2>
+    <div id="chart"></div>
+</div>
+
+<!-- EXTRA CHARTS -->
+<div class="card">
+    <h2>Portfolio Performance</h2>
+    <canvas id="portfolioChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>Market Trend</h2>
+    <canvas id="trendChart"></canvas>
+</div>
+
+<!-- AI -->
+<div class="card">
+    <h2>AI Prediction</h2>
+    <p id="prediction"></p>
+</div>
+
+<!-- ALERT -->
+<div class="card">
+    <h2>Set Price Alert</h2>
+    <input id="alertStock">
+    <input id="alertPrice" type="number">
+    <button onclick="setAlert()">Set</button>
+</div>
+
+<!-- NEWS -->
+<div class="card">
+    <h2>Market News</h2>
+    <div id="newsContainer">Loading...</div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ALERT
+function showAlert(msg,type="info"){
+    alertBox.innerText=msg;
+    alertBox.className=type;
+    alertBox.style.display="block";
+    setTimeout(()=>alertBox.style.display="none",3000);
+}
+
+// LOGIN
+window.onload=()=>{ if(localStorage.getItem("login")) showApp(); }
+function login(){
+    if(username.value==="admin"&&password.value==="1234"){
+        localStorage.setItem("login",true);
+        showAlert("Login successful","success");
+        setTimeout(showApp,1000);
+    } else showAlert("Wrong credentials","error");
+}
+function showApp(){loginPage.style.display="none";app.style.display="block";}
+function logout(){localStorage.clear();location.reload();}
+
+// STOCKS
+const stocks=["TCS","RELIANCE","HDFC"];
+let data={};
+
+function loadStocks(){
+    let container=document.getElementById("stocks");
+    container.innerHTML="";
+    stocks.forEach(s=>{
+        let p=(Math.random()*3000+1000).toFixed(2);
+        data[s]=p;
+        container.innerHTML+=`<div class="stock-card"><h3>${s}</h3><p id="${s}">₹${p}</p></div>`;
+    });
+}
+loadStocks();
+
+setInterval(()=>{
+    stocks.forEach(s=>{
+        let np=(parseFloat(data[s])+(Math.random()*2-1)*50).toFixed(2);
+        data[s]=np;
+        document.getElementById(s).innerText="₹"+np;
+    });
+},4000);
+
+// SEARCH
+search.oninput=()=>{
+    let v=search.value.toLowerCase();
+    document.querySelectorAll(".stock-card").forEach(c=>{
+        c.style.display=c.innerText.toLowerCase().includes(v)?"":"none";
+    });
+};
+
+// PORTFOLIO
+let bal=100000,pf={};
+balance.innerText=bal;
+
+function buy(){
+    let s=stockName.value.toUpperCase();
+    let q=parseInt(qty.value);
+    let price=parseFloat(data[s]);
+
+    if(!price) return showAlert("Invalid stock","error");
+    if(bal<price*q) return showAlert("Low balance","error");
+
+    bal-=price*q;
+    pf[s]=(pf[s]||0)+q;
+
+    showAlert("Stock bought","success");
+    balance.innerText=bal;
+}
+
+function sell(){
+    let s=stockName.value.toUpperCase();
+    let q=parseInt(qty.value);
+
+    if(!pf[s]||pf[s]<q) return showAlert("Not enough shares","error");
+
+    bal+=data[s]*q;
+    pf[s]-=q;
+
+    showAlert("Stock sold","info");
+    balance.innerText=bal;
+}
+
+// TRADINGVIEW
+new TradingView.widget({
+    width:"100%",
+    height:400,
+    symbol:"NSE:RELIANCE",
+    theme:"dark",
+    studies:["RSI@tv-basicstudies","MACD@tv-basicstudies"],
+    container_id:"chart"
+});
+
+// CHARTS
+new Chart(document.getElementById("portfolioChart"), {
+    type:"line",
+    data:{labels:["Mon","Tue","Wed","Thu","Fri"],
+    datasets:[{label:"Portfolio",data:[100000,102000,101000,105000,107000]}]}
+});
+
+new Chart(document.getElementById("trendChart"), {
+    type:"bar",
+    data:{labels:["TCS","Reliance","HDFC"],
+    datasets:[{label:"Trend %",data:[1.2,-0.5,0.8]}]}
+});
+
+// AI
+setInterval(()=>{
+    let vals=Object.values(data);
+    let avg=vals.reduce((a,b)=>a+parseFloat(b),0)/vals.length;
+    prediction.innerText=vals[2]>avg?"UP 📈":"DOWN 📉";
+},4000);
+
+// ALERT SYSTEM
+let alerts=[];
+function setAlert(){
+    alerts.push({stock:alertStock.value.toUpperCase(),price:alertPrice.value});
+    showAlert("Alert set","info");
+}
+setInterval(()=>{
+    alerts.forEach(a=>{
+        if(data[a.stock]>=a.price){
+            showAlert(`${a.stock} reached target`,"success");
+        }
+    });
+},3000);
+
+// 📰 WORKING NEWS (REUTERS RSS)
+async function loadNews(){
+    try{
+        let res=await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://feeds.reuters.com/reuters/businessNews");
+        let d=await res.json();
+
+        let container=document.getElementById("newsContainer");
+        container.innerHTML="";
+
+        d.items.slice(0,5).forEach(a=>{
+            container.innerHTML+=`
+                <div class="stock-card">
+                    <b>${a.title}</b><br>
+                    <a href="${a.link}" target="_blank">Read more →</a>
+                </div>
+            `;
+        });
+
+    } catch {
+        newsContainer.innerText="News unavailable";
+    }
+}
+loadNews();
+
+</script>
+
+</body>
+</html>
