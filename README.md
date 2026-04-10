@@ -25,3 +25,6 @@ Technologies Used
 - Real-time stock API integration
 - Login system
 - Advanced analytics
+
+- username - admin
+- password - 1234
